@@ -28,3 +28,9 @@ dist-ssr
 node_modules/
 dist/
 .env
+venv/
+__pycache__/
+*.pyc
+*.pem
+.vscode/
+.DS_Store
