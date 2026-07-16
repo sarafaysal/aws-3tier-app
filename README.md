@@ -1,16 +1,82 @@
-# React + Vite
+# AWS 3-Tier Web Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack application demonstrating a secure, production-style 3-tier architecture on AWS, built as part of my DevOps internship (DecodeLabs, Batch 2026).
 
-Currently, two official plugins are available:
+## Architecture
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend (React + Vite)** — deployed on an EC2 instance in a **public subnet**, the only publicly accessible layer.
+- **Backend (Python + Flask)** — deployed on an EC2 instance in a **private subnet**, reachable only from the frontend.
+- **Database (PostgreSQL)** — deployed on an EC2 instance in a **private subnet**, reachable only from the backend.
 
-## React Compiler
+Internet
+│
+▼
+[ ALB / HTTPS ]
+│
+▼
+[ Frontend EC2 - Public Subnet ]
+│  (private IP)
+▼
+[ Backend EC2 - Private Subnet ]
+│  (private IP)
+▼
+[ Database EC2 - Private Subnet ]
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Networking
+- Custom **VPC** with 1 public and 1 private subnet
+- **NAT Gateway** allows private instances to reach the internet (e.g. for package installs) without being exposed to it
+- **Security Groups** enforce least-privilege access:
+  - Frontend: accepts HTTP/HTTPS from the internet, SSH from admin IP
+  - Backend: accepts traffic only from Frontend's security group
+  - Database: accepts traffic only from Backend's security group
 
-## Expanding the ESLint configuration
+## How it works
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. User visits the frontend in their browser and enters text into the input box.
+2. On clicking **Insert**, the frontend sends a POST request to the backend's `/insert` endpoint, using the backend's private IP.
+3. The backend receives the text, appends the current server-side date & time, and inserts the record into PostgreSQL.
+4. The frontend calls the backend's `/entries` endpoint (GET) to fetch and display all stored entries.
+
+## Tech Stack
+
+| Layer     | Technology         |
+|-----------|---------------------|
+| Frontend  | React (Vite)         |
+| Backend   | Python, Flask, Flask-CORS |
+| Database  | PostgreSQL            |
+| Infra     | AWS EC2, VPC, NAT Gateway, Security Groups, (ALB + Route 53/Namecheap — in progress) |
+
+## Project Structure
+aws-3tier-app/
+├── frontend/     # React application
+├── backend/      # Flask API
+│   ├── app.py
+│   └── requirements.txt
+└── README.md
+
+## Running Locally / On EC2
+
+**Backend**
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 app.py
+```
+
+**Frontend**
+```bash
+cd frontend
+npm install
+npm run dev -- --host
+```
+
+## Status
+- [x] VPC, subnets, NAT Gateway, security groups configured
+- [x] PostgreSQL database deployed and configured
+- [x] Flask backend deployed, connected to database
+- [x] React frontend built and connected to backend
+- [x] Custom domain (Namecheap) + HTTPS via ALB
+
+
