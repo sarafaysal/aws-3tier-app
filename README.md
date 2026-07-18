@@ -31,33 +31,34 @@ This was built as a hands-on cloud infrastructure project to learn: VPC networki
 ## 🏗️ Architecture
 
 ```
-                                🌍 Internet
-                                     │
-                                     ▼
-                    🔗 sarafaysal.site  (Namecheap → Route 53 DNS)
-                                     │
-                                     ▼
-┌──────────────────────────── VPC: myapp-vpc-vpc ────────────────────────────┐
-│                                                                              │
-│   🟢 PUBLIC SUBNET  (eu-north-1a / eu-north-1b)                             │
-│   ┌────────────────────────────┐                                           │
-│   │  🖥️  frontend-server          │  ← only publicly reachable machine       │
-│   │  • React app (built)          │                                           │
-│   │  • Nginx (serves app +           │                                           │
-│   │    reverse-proxies /api/)           │                                           │
-│   │  • Let's Encrypt SSL (HTTPS)           │                                           │
-│   └──────────────┬─────────────┘                                           │
-│                  │ SSH jump + private API calls                              │
-│   🔒 PRIVATE SUBNET  (eu-north-1a)                                             │
-│   ┌──────────────▼─────────────┐      ┌───────────────────────┐             │
-│   │  ⚙️  backend-server            │─────▶│  🗄️  database-server        │             │
-│   │  • Flask REST API                │      │  • PostgreSQL                 │             │
-│   │  • Runs as systemd service          │      │  • No public IP                    │             │
-│   │    (auto-restart, boots on start)      │      │  • Reachable only from                │             │
-│   │  • No public IP                          │      │    backend-sg on port 5432               │             │
-│   └───────────────────────────┘      └───────────────────────┘             │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────┘
+                              Internet
+                                 |
+                                 v
+                sarafaysal.site  (Namecheap -> Route 53 DNS)
+                                 |
+                                 v
++-------------------------- VPC: myapp-vpc-vpc --------------------------+
+|                                                                        |
+|   PUBLIC SUBNET  (eu-north-1a / eu-north-1b)                          |
+|   +----------------------------------+                                |
+|   |  frontend-server                 |  <- only publicly reachable    |
+|   |  - React app (built)             |     machine                   |
+|   |  - Nginx (serves app +           |                                |
+|   |    reverse-proxies /api/)        |                                |
+|   |  - Let's Encrypt SSL (HTTPS)     |                                |
+|   +----------------+-----------------+                                |
+|                    | SSH jump + private API calls                     |
+|   PRIVATE SUBNET  (eu-north-1a)                                       |
+|   +----------------v-----------------+      +----------------------+ |
+|   |  backend-server                  |----->|  database-server     | |
+|   |  - Flask REST API                |      |  - PostgreSQL        | |
+|   |  - Runs as systemd service       |      |  - No public IP      | |
+|   |    (auto-restart, boots on start)|      |  - Reachable only    | |
+|   |  - No public IP                  |      |    from backend-sg   | |
+|   |                                   |      |    on port 5432      | |
+|   +-----------------------------------+      +----------------------+ |
+|                                                                        |
++------------------------------------------------------------------------+
 ```
 
 **🔐 Access model:** Only `frontend-server` is internet-facing. `backend-server` and `database-server` live in a private subnet with **zero public exposure** — reachable only via SSH-jump through the frontend (for management) or scoped Security Group rules (for app traffic).
