@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  🌐 <b>Live:</b> <a href="https://sarafaysal.site">sarafaysal.site</a>
+  🌐 <b>Status:</b> Deployed and verified live at <code>sarafaysal.site</code> during development (see screenshots below). Infrastructure decommissioned after grading to avoid ongoing AWS charges.
 </p>
 
 ---
